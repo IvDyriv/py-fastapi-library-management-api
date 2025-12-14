@@ -17,9 +17,21 @@ def get_db():
         db.close()
 
 
-@app.post("/authors/", response_model=schemas.AuthorRead, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/authors/",
+    response_model=schemas.AuthorRead,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_author(author_in: schemas.AuthorCreate, db: Session = Depends(get_db)):
+    existing = crud.get_author_by_name(db, author_in.name)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Author with this name already exists",
+        )
+
     return crud.create_author(db, author_in)
+
 
 
 @app.get("/authors/", response_model=list[schemas.AuthorRead])
